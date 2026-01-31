@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mongo:
     image: mongo
@@ -25,18 +23,22 @@ services:
       - ./whishper_data/libretranslate/cache:/home/libretranslate/.local/cache
     env_file:
       - .env
-    user: root
     tty: true
     environment:
       LT_DISABLE_WEB_UI: True
-      LT_LOAD_ONLY: ${LT_LOAD_ONLY:-en,fr,es}
       LT_UPDATE_MODELS: True
+      LT_LOAD_ONLY: ${LT_LOAD_ONLY:-en,ca,es}
     expose:
       - 5000
     networks:
       default:
         aliases:
           - translate
+    healthcheck:
+      test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']
+      interval: 2s
+      timeout: 3s
+      retries: 5
     deploy:
       resources:
         reservations:
@@ -46,31 +48,35 @@ services:
             capabilities: [gpu]
 
   whishper:
-    pull_policy: always
-    image: pluja/whishper:${WHISHPER_VERSION:-latest-gpu}
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    image: whishper-reloaded:gpu
+    container_name: whishper
+    restart: unless-stopped
     env_file:
       - .env
     volumes:
       - ./whishper_data/uploads:/app/uploads
       - ./whishper_data/logs:/var/log/whishper
-    container_name: whishper
-    restart: unless-stopped
-    networks:
-      default:
-        aliases:
-          - whishper
+    environment:
+      - LIBRETRANSLATE_URL=http://translate:5000
+      - TRANSLATE_URL=http://translate:5000
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - WHISPER_DEVICE=cuda
+      - WHISPER_COMPUTE_TYPE=float16
+      - PUBLIC_INTERNAL_API_HOST="http://127.0.0.1:80"
+      - PUBLIC_TRANSLATION_API_HOST=translate
+      - PUBLIC_API_HOST=${WHISHPER_HOST:-}
+      - PUBLIC_WHISHPER_PROFILE=gpu
+      - WHISPER_MODELS_DIR=/app/models
+      - UPLOAD_DIR=/app/uploads
     ports:
-      - 8082:80
+      - 8081:80
     depends_on:
       - mongo
       - translate
-    environment:
-      PUBLIC_INTERNAL_API_HOST: "http://127.0.0.1:80"
-      PUBLIC_TRANSLATION_API_HOST: ""
-      PUBLIC_API_HOST: ${WHISHPER_HOST:-}
-      PUBLIC_WHISHPER_PROFILE: gpu
-      WHISPER_MODELS_DIR: /app/models
-      UPLOAD_DIR: /app/uploads
     deploy:
       resources:
         reservations:
@@ -78,3 +84,31 @@ services:
           - driver: nvidia
             count: all
             capabilities: [gpu]
+  # whishper:
+  #   pull_policy: always
+  #   image: pluja/whishper:${WHISHPER_VERSION:-latest-gpu}
+  #   container_name: whishper
+  #   restart: unless-stopped
+  #   networks:
+  #     default:
+  #       aliases:
+  #         - whishper
+  #   ports:
+  #     - 8082:80
+  #   depends_on:
+  #     - mongo
+  #     - translate
+  #   environment:
+  #     PUBLIC_INTERNAL_API_HOST: "http://127.0.0.1:80"
+  #     PUBLIC_TRANSLATION_API_HOST: ""
+  #     PUBLIC_API_HOST: ${WHISHPER_HOST:-}
+  #     PUBLIC_WHISHPER_PROFILE: gpu
+  #     WHISPER_MODELS_DIR: /app/models
+  #     UPLOAD_DIR: /app/uploads
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #         - driver: nvidia
+  #           count: all
+  #           capabilities: [gpu]
