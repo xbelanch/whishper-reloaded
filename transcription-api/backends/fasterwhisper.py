@@ -4,6 +4,8 @@ import os, math
 from tqdm import tqdm  # type: ignore
 import uuid
 from faster_whisper import WhisperModel, download_model, decode_audio
+import torch
+import logging
 
 class FasterWhisperBackend(Backend):
     device: str = "cpu"  # cpu, cuda
@@ -24,14 +26,35 @@ class FasterWhisperBackend(Backend):
             return local_model_path
         else:
             raise RuntimeError(f"model not found in {local_model_path}")
-        
+
+
     def load(self) -> None:
-        # Get CPU threads env variable or default to 4
         cpu_threads = int(os.environ.get("CPU_THREADS", 4))
+
+        # Device: per defecte 'cuda' si existeix GPU visible, sinó 'cpu'
+        device = os.environ.get("WHISPER_DEVICE", "cuda")
+        if device == "cuda" and not torch.cuda.is_available():
+            device = "cpu"
+        
+        # Quantització: float16 quan cuda, int8 quan cpu (pots ajustar-ho)
+        quant = os.environ.get("WHISPER_COMPUTE_TYPE",
+                           getattr(self, "quantization", "float16" if device == "cuda" else "int8"))
+
+        self.device = device
+        self.quantization = quant
+
         self.model = WhisperModel(
-            self.model_path(), device=self.device, compute_type=self.quantization, cpu_threads=cpu_threads
+            self.model_path(),
+            device=self.device,
+            compute_type=self.quantization,
+            cpu_threads=cpu_threads,
         )
 
+        logging.warning(
+            "WhisperModel initialized: device=%s compute_type=%s cpu_threads=%s",
+            self.device, self.quantization, cpu_threads
+        )
+        
     def get_model(self) -> None:
         print(f"Downloading model {self.model_size}...")
         local_model_path = os.path.join(os.environ["WHISPER_MODELS_DIR"], f"faster-whisper-{self.model_size}")

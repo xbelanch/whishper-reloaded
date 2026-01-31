@@ -60,7 +60,10 @@ WORKDIR /app/transcription
 RUN pip install -r requirements.txt && \
     pip install python-multipart && \
     pip3 install torch --index-url https://download.pytorch.org/whl/cu118
- 
+
+RUN pip install --no-cache-dir \
+    torch torchvision torchaudio
+
 # Node.js service setup
 RUN wget https://nodejs.org/dist/v20.9.0/node-v20.9.0-linux-x64.tar.xz && \
     tar -xf node-v20.9.0-linux-x64.tar.xz && \
