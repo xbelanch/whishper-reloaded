@@ -39,14 +39,8 @@ services:
       interval: 2s
       timeout: 3s
       retries: 5
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            count: all
-            capabilities: [gpu]
-
+    gpus: all
+        
   whishper:
     build:
       context: .
@@ -66,8 +60,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
       - WHISPER_DEVICE=cuda
       - WHISPER_COMPUTE_TYPE=float16
-      - PUBLIC_INTERNAL_API_HOST="http://127.0.0.1:80"
-      - PUBLIC_TRANSLATION_API_HOST=translate
+      - PUBLIC_INTERNAL_API_HOST=http://127.0.0.1:80
       - PUBLIC_API_HOST=${WHISHPER_HOST:-}
       - PUBLIC_WHISHPER_PROFILE=gpu
       - WHISPER_MODELS_DIR=/app/models
@@ -77,38 +70,4 @@ services:
     depends_on:
       - mongo
       - translate
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            count: all
-            capabilities: [gpu]
-  # whishper:
-  #   pull_policy: always
-  #   image: pluja/whishper:${WHISHPER_VERSION:-latest-gpu}
-  #   container_name: whishper
-  #   restart: unless-stopped
-  #   networks:
-  #     default:
-  #       aliases:
-  #         - whishper
-  #   ports:
-  #     - 8082:80
-  #   depends_on:
-  #     - mongo
-  #     - translate
-  #   environment:
-  #     PUBLIC_INTERNAL_API_HOST: "http://127.0.0.1:80"
-  #     PUBLIC_TRANSLATION_API_HOST: ""
-  #     PUBLIC_API_HOST: ${WHISHPER_HOST:-}
-  #     PUBLIC_WHISHPER_PROFILE: gpu
-  #     WHISPER_MODELS_DIR: /app/models
-  #     UPLOAD_DIR: /app/uploads
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #         - driver: nvidia
-  #           count: all
-  #           capabilities: [gpu]
+    gpus: all
