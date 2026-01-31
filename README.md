@@ -1,6 +1,6 @@
 [![whishper banner](misc/banner.png)](https://whishper.net)
 
-**Whishper Reloaded** is an open-source, 100% local audio transcription and subtitling suite with a full-featured web UI. It is based on [Pluja's Whishper](https://github.com/pluja/whishper) and further improved.
+**Whishper Boogaloo** is an open-source, 100% local audio transcription and subtitling suite with a full-featured web UI. It is based on [Pluja's Whishper](https://github.com/pluja/whishper) and further improved.
 
 ## What's different?
 

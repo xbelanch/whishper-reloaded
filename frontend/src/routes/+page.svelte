@@ -253,7 +253,7 @@
 		<span>
 			<img class="w-20 h-20" src="/logo.svg" alt="Logo: a cloud whispering" />
 		</span>
-		<span> Whishper Reloaded</span>
+		<span>Whishper Electric Boogaloo</span>
 	</h1>
 	<h2 class="font-mono text-center text-md opacity-70">{data.randomSentence}</h2>
 </header>
